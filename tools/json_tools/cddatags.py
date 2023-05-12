@@ -31,13 +31,12 @@ def main(args):
 
     parser.parse_args(args)
 
-    definitions = []
-
     # JSON keys to generate tags for
     id_keys = (
         'id', 'abstract', 'ident',
         'nested_mapgen_id', 'update_mapgen_id', 'result')
 
+    definitions = []
     for dirpath, dirnames, filenames in os.walk(JSON_DIR):
         for filename in filenames:
             if filename.endswith('.json'):
@@ -48,16 +47,14 @@ def main(args):
                     try:
                         json_data = json.load(file)
                     except Exception as err:
-                        sys.stderr.write(
-                            "Problem reading file %s, reason: %s" %
-                            (filename, err))
+                        sys.stderr.write(f"Problem reading file {filename}, reason: {err}")
                         continue
                     if type(json_data) == dict:
                         json_data = [json_data]
                     elif type(json_data) != list:
                         sys.stderr.write(
-                            "Problem parsing data from file %s, reason: "
-                            "expected a list." % filename)
+                            f"Problem parsing data from file {filename}, reason: expected a list."
+                        )
                         continue
 
                     # Check each object in json_data for taggable keys

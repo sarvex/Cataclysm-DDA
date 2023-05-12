@@ -22,12 +22,11 @@ def portion_null(dat):
     ret = ret and dat.max_encumbrance == -1
     ret = ret and dat.coverage == -1
     ret = ret and len(dat.covers) == 0
-    ret = ret and not dat.sided
-    return ret
+    return ret and not dat.sided
 
 
 def gen_entry(dat):
-    added = dict()
+    added = {}
 
     if dat.encumbrance != -1:
         added["encumbrance"] = dat.encumbrance

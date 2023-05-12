@@ -97,7 +97,7 @@ def read_properties(filepath: str) -> dict:
     '''
     with open(filepath, 'r') as file:
         pairs = {}
-        for line in file.readlines():
+        for line in file:
             line = line.strip()
             if line and not line.startswith('#'):
                 key, value = line.split(':')
@@ -228,15 +228,15 @@ class Tileset:
 
         # combine config data in the correct order
         sheet_configs = typed_sheets['main'] + typed_sheets['filler'] \
-            + typed_sheets['fallback']
+                + typed_sheets['fallback']
 
         # prepare "tiles-new", but remember max index of each sheet in keys
-        tiles_new_dict = dict()
+        tiles_new_dict = {}
 
         def create_tile_entries_for_unused(
                 unused: list,
                 fillers: bool)\
-                -> None:
+                    -> None:
             # the list must be empty without use_all
             for unused_png in unused:
                 if unused_png in self.processed_ids:
@@ -392,9 +392,7 @@ class Tilesheet:
             return False
         if self.sprite_width != self.tileset.sprite_width:
             return False
-        if self.sprite_height != self.tileset.sprite_height:
-            return False
-        return True
+        return self.sprite_height == self.tileset.sprite_height
 
     def walk_dirs(self) -> None:
         '''
@@ -495,25 +493,22 @@ class Tilesheet:
 
         # count empty spaces in the last row
         self.tileset.pngnum += self.sheet_width - \
-            ((len(self.sprites) % self.sheet_width) or self.sheet_width)
+                ((len(self.sprites) % self.sheet_width) or self.sheet_width)
 
-        if self.sprites:
-            sheet_image = Vips.Image.arrayjoin(
-                self.sprites, across=self.sheet_width)
+        sheet_image = Vips.Image.arrayjoin(
+            self.sprites, across=self.sheet_width)
 
-            pngsave_args = PNGSAVE_ARGS
+        pngsave_args = PNGSAVE_ARGS
 
-            if self.tileset.palette:
-                pngsave_args['palette'] = True
+        if self.tileset.palette:
+            pngsave_args['palette'] = True
 
-            sheet_image.pngsave(self.output, **pngsave_args)
+        sheet_image.pngsave(self.output, **pngsave_args)
 
-            if self.tileset.palette_copies and not self.tileset.palette:
-                sheet_image.pngsave(
-                    self.output + '8', palette=True, **pngsave_args)
+        if self.tileset.palette_copies and not self.tileset.palette:
+            sheet_image.pngsave(f'{self.output}8', palette=True, **pngsave_args)
 
-            return True
-        return False
+        return True
 
 
 class TileEntry:
@@ -527,8 +522,7 @@ class TileEntry:
     def convert(
             self,
             entry: Union[dict, None] = None,
-            prefix: str = '')\
-            -> Optional[dict]:
+            prefix: str = '') -> Optional[dict]:
         '''
         Recursively compile input into game-compatible objects in-place
         '''
@@ -574,13 +568,10 @@ class TileEntry:
                 full_id = f'{prefix}{an_id}'
                 if full_id not in self.tilesheet.tileset.processed_ids:
                     self.tilesheet.tileset.processed_ids.append(full_id)
-                else:
-                    if not skipping_filler:
-                        print(f'Error: {full_id} encountered more than once')
-                        self.tilesheet.tileset.error_logged = True
-            if skipping_filler:
-                return None
-            return entry
+                elif not skipping_filler:
+                    print(f'Error: {full_id} encountered more than once')
+                    self.tilesheet.tileset.error_logged = True
+            return None if skipping_filler else entry
         print(f'skipping empty entry for {prefix}{tile_id}')
         return None
 
@@ -635,13 +626,13 @@ class TileEntry:
         Get sprite index by sprite name and append it to entry
         '''
         if sprite_name:
-            sprite_index = self.tilesheet.tileset\
-                .pngname_to_pngnum.get(sprite_name, 0)
-            if sprite_index:
+            if sprite_index := self.tilesheet.tileset.pngname_to_pngnum.get(
+                sprite_name, 0
+            ):
                 sheet_type = 'filler' if self.tilesheet.is_filler else 'main'
                 try:
                     self.tilesheet.tileset\
-                        .unreferenced_pngnames[sheet_type].remove(sprite_name)
+                            .unreferenced_pngnames[sheet_type].remove(sprite_name)
                 except ValueError:
                     pass
 
